@@ -67,9 +67,14 @@ class LocaList_Dashboard {
             wp_send_json_error([ 'message' => __( 'Title and description are required.', 'localist' ) ], 400 );
         }
 
-        // Check listing limit for non-admins
-        if ( ! current_user_can( 'manage_options' ) ) {
-            $limit = (int) get_option( 'localist_user_listing_limit', 5 );
+        // Check listing limit using Membership framework
+        $limit = \LocaList\Core\LocaList_Membership::get_user_listing_limit( get_current_user_id() );
+        $count = count_user_posts( get_current_user_id(), 'listing' );
+        if ( $count >= $limit ) {
+            wp_send_json_error([ 
+                'message' => sprintf( __( 'You have reached your limit of %d listings. Upgrade to Pro for more!', 'localist' ), $limit ) 
+            ], 403 );
+        }
             $count = count_user_posts( get_current_user_id(), 'listing' );
             if ( $count >= $limit ) {
                 wp_send_json_error([ 
